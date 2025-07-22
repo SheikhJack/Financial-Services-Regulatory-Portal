@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Admin {
+  id       String @id
+  username String @unique
+}
+
+model Client {
+  id                 String       @id
+  username           String       @unique
+  name               String
+  surname            String
+  email              String?      @unique
+  phone              String?      @unique
+  address            String
+  img                String?
+  registrationNumber String   
+  sex                UserSex
+  createdAt          DateTime     @default(now())
+  supervisorId       String
+  supervisor         Supervisor   @relation(fields: [supervisorId], references: [id])
+  groupId            Int
+  group              Group        @relation(fields: [groupId], references: [id])
+  riskLevelId        Int
+  riskLevel          RiskLevel    @relation(fields: [riskLevelId], references: [id])
+  attendances        Attendance[]
+  status             Status[]
+  birthday           DateTime
+}
+
+model Advisor {
+  id                 String    @id
+  username           String    @unique
+  name               String
+  surname            String
+  email              String?   @unique
+  phone              String?   @unique
+  address            String
+  img                String?
+  registrationNumber String   
+  sex                UserSex
+  createdAt          DateTime  @default(now())
+  regulations        Regulation[]
+  resources          Resource[]
+  groups             Group[]
+  birthday           DateTime
+}
+
+model Supervisor {
+  id        String    @id
+  username  String    @unique
+  name      String
+  surname   String
+  email     String?   @unique
+  phone     String    @unique
+  address   String
+  createdAt DateTime  @default(now())
+  clients   Client[]
+}
+
+model RiskLevel {
+  id            Int @id @default(autoincrement())
+  level         Int @unique
+
+  clients       Client[]
+  groups        Group[]
+}
+
+model Group {
+  id            Int    @id @default(autoincrement())
+  name          String @unique
+  capacity      Int
+
+  supervisorId    String?
+  supervisor      Advisor?       @relation(fields: [supervisorId], references: [id])
+  resources       Resource[]
+  clients         Client[]
+  riskLevelId     Int
+  riskLevel       RiskLevel      @relation(fields: [riskLevelId], references: [id])
+  events          Event[]
+  announcements   Announcement[]
+}
+
+model Regulation {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  advisors     Advisor[]
+  resources    Resource[]
+}
+
+model Resource {
+  id           Int      @id @default(autoincrement())
+  name         String
+  day          Day
+  startTime    DateTime
+  endTime      DateTime
+
+  regulationId Int
+  regulation   Regulation @relation(fields: [regulationId], references: [id])
+  groupId      Int
+  group        Group     @relation(fields: [groupId], references: [id])
+  advisorId    String
+  advisor      Advisor   @relation(fields: [advisorId], references: [id])
+  assessments  Assessment[]
+  reports      Report[]
+  attendances  Attendance[]
+}
+
+model Assessment {
+  id           Int      @id @default(autoincrement())
+  title        String
+  startTime    DateTime
+  endTime      DateTime
+
+  resourceId Int
+  resource     Resource @relation(fields: [resourceId], references: [id])
+  status       Status[]
+}
+
+model Report {
+  id           Int      @id @default(autoincrement())
+  title        String
+  startDate    DateTime
+  dueDate      DateTime
+
+  resourceId Int
+  resource     Resource @relation(fields: [resourceId], references: [id])
+  status       Status[]
+}
+
+model Status {
+  id           Int       @id @default(autoincrement())
+  score        Int
+
+  assessmentId Int?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id])
+  reportId     Int?
+  report       Report?     @relation(fields: [reportId], references: [id])
+  clientId     String
+  client       Client      @relation(fields: [clientId], references: [id])
+}
+
+model Attendance {
+  id           Int        @id @default(autoincrement())
+  date         DateTime
+  present      Boolean
+
+  clientId     String
+  client       Client     @relation(fields: [clientId], references: [id])
+  resourceId   Int
+  resource     Resource   @relation(fields: [resourceId], references: [id])
+}
+
+model Content {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   // e.g., 'pdf', 'post', 'image'
+  url         String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+
+  groupId     Int?
+  group       Group? @relation(fields: [groupId], references: [id])
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
+
+  groupId     Int?
+  group       Group? @relation(fields: [groupId], references: [id])
+}
+
+enum UserSex {
+  MALE
+  FEMALE
+}
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
